@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sliders } from "lucide-react";
+import { Sliders, X, ChevronDown, ChevronUp } from "lucide-react";
 
 interface ClimaDemoProps {
   precision: number;
@@ -30,6 +30,7 @@ export default function ClimaDemo({
 }: ClimaDemoProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [showMobileControls, setShowMobileControls] = useState(false);
+  const [showHUD, setShowHUD] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Estados locales para la simulación
@@ -295,6 +296,14 @@ export default function ClimaDemo({
 
   return (
     <div className="relative flex flex-col lg:grid lg:grid-cols-[340px_1fr] h-full w-full min-h-0 overflow-hidden bg-hw-bg">
+      {/* Backdrop de móvil para el panel de control */}
+      {showMobileControls && (
+        <div
+          onClick={() => setShowMobileControls(false)}
+          className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-25 transition-opacity duration-200"
+        />
+      )}
+
       {/* Botón flotante para controles en móvil/resoluciones bajas */}
       <button
         onClick={() => setShowMobileControls(!showMobileControls)}
@@ -307,9 +316,20 @@ export default function ClimaDemo({
       {/* ---------- PANEL DE CONTROL ---------- */}
       <aside className={`
         bg-hw-panel border-r border-hw-border p-5 overflow-y-auto flex flex-col gap-5 select-none min-h-0
-        absolute lg:static inset-y-0 left-0 z-10 w-[300px] sm:w-[340px] transition-transform duration-300
+        absolute lg:static inset-y-0 left-0 z-30 w-[300px] sm:w-[340px] transition-transform duration-300
         ${showMobileControls ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
+        {/* Cabecera móvil con botón de cerrar */}
+        <div className="flex lg:hidden justify-between items-center pb-2 border-b border-hw-border">
+          <span className="text-[10px] tracking-wider text-hw-cyan font-bold font-mono">// AJUSTES</span>
+          <button
+            onClick={() => setShowMobileControls(false)}
+            className="p-1 text-gray-400 hover:text-white cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] tracking-[0.25em] uppercase text-hw-cyan font-bold font-mono">
             // EDWARD LORENZ · 1961
@@ -458,32 +478,49 @@ export default function ClimaDemo({
         <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
 
         {/* Lector de Horizonte */}
-        <div className="absolute top-5 right-5 w-[240px] md:w-[260px] bg-hw-panel/95 backdrop-blur-md border border-hw-border p-4 z-10">
-          <div className="text-[11px] tracking-widest uppercase text-gray-500 font-bold font-mono mb-1.5">
-            // HORIZONTE DE PREDICCIÓN
+        <div className="absolute top-4 right-4 w-[245px] sm:w-[260px] max-w-[calc(100%-2rem)] bg-hw-panel/95 backdrop-blur-md border border-hw-border rounded shadow-lg p-3 sm:p-4 z-10 select-none transition-all duration-300">
+          <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowHUD(!showHUD)}>
+            <div className="text-[10px] sm:text-[11px] tracking-widest uppercase text-gray-500 font-bold font-mono">
+              // HORIZONTE DE PREDICCIÓN
+            </div>
+            <button className="text-gray-400 hover:text-white transition p-0.5 cursor-pointer">
+              {showHUD ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
           </div>
-          <div
-            className={`text-3xl font-mono font-bold tracking-tight leading-none ${
-              divergedAt !== null ? "text-red-500" : "text-hw-cyan"
-            }`}
-          >
-            {divergedAt !== null ? `${Math.round(divergedAt)} DÍAS` : "ESTABLE"}
-          </div>
-          <div className="text-xs text-gray-400 mt-2.5 leading-relaxed min-h-[32px] font-mono">
-            {divergedAt !== null
-              ? "Más allá de aquí, el pronóstico redondeado no se parece en nada al real."
-              : precision >= 6
-              ? "Con 6 decimales, los pronósticos son idénticos."
-              : "Los dos pronósticos aún coinciden…"}
-          </div>
-          <div className="flex flex-col gap-1.5 mt-3 border-t border-hw-border pt-3 text-[10.5px] font-mono uppercase">
-            <span className="flex items-center gap-2 text-gray-400">
-              <span className="w-3 h-3 bg-hw-cyan" /> original (6 decs)
-            </span>
-            <span className="flex items-center gap-2 text-gray-400">
-              <span className="w-3 h-3 bg-hw-amber" /> re-corrido ({precision} decs)
-            </span>
-          </div>
+
+          {showHUD ? (
+            <div className="animate-in fade-in duration-200 mt-2">
+              <div
+                className={`text-2xl sm:text-3xl font-mono font-bold tracking-tight leading-none ${
+                  divergedAt !== null ? "text-red-500" : "text-hw-cyan"
+                }`}
+              >
+                {divergedAt !== null ? `${Math.round(divergedAt)} DÍAS` : "ESTABLE"}
+              </div>
+              <div className="text-[11px] sm:text-xs text-gray-400 mt-1.5 sm:mt-2.5 leading-relaxed min-h-[32px] font-mono">
+                {divergedAt !== null
+                  ? "Más allá de aquí, el pronóstico redondeado no se parece en nada al real."
+                  : precision >= 6
+                  ? "Con 6 decimales, los pronósticos son idénticos."
+                  : "Los dos pronósticos aún coinciden…"}
+              </div>
+              <div className="flex flex-col gap-1.5 mt-2.5 border-t border-hw-border pt-2.5 text-[10px] sm:text-[10.5px] font-mono uppercase">
+                <span className="flex items-center gap-2 text-gray-400">
+                  <span className="w-2.5 h-2.5 bg-hw-cyan animate-pulse" /> original (6 decs)
+                </span>
+                <span className="flex items-center gap-2 text-gray-400">
+                  <span className="w-2.5 h-2.5 bg-hw-amber animate-pulse" /> re-corrido ({precision} decs)
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-baseline justify-between mt-1 text-xs font-mono animate-in fade-in duration-200">
+              <span className="text-gray-400">HORIZONTE:</span>
+              <span className={`font-bold ${divergedAt !== null ? "text-red-500" : "text-hw-cyan"}`}>
+                {divergedAt !== null ? `${Math.round(divergedAt)} DÍAS` : "ESTABLE"}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="absolute bottom-16 lg:bottom-3 left-5 font-mono text-[10.5px] text-gray-500">
