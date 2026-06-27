@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { QrCode, Users, Shield, ShieldAlert, RotateCcw, Link2, Check, Lock, Unlock, Compass } from "lucide-react";
+import { QrCode, Users, Shield, ShieldAlert, RotateCcw, Link2, Check, Lock, Unlock, Compass, Edit2 } from "lucide-react";
 
 interface PresenterPanelProps {
   clientsCount: number;
@@ -24,6 +24,10 @@ export default function PresenterPanel({
   const [copied, setCopied] = useState(false);
   const [appUrl, setAppUrl] = useState("");
   const [urlType, setUrlType] = useState<"public" | "current">("public");
+  const [customUrl, setCustomUrl] = useState(() => {
+    return localStorage.getItem("lorenz_custom_share_url") || "";
+  });
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
 
   useEffect(() => {
     // Obtener la URL base del navegador actual
@@ -35,12 +39,18 @@ export default function PresenterPanel({
     setAppUrl(base);
   }, []);
 
-  const projectedUrl = urlType === "public" ? appUrl : window.location.origin;
+  const activeBaseUrl = customUrl.trim() || appUrl;
+  const projectedUrl = urlType === "public" ? activeBaseUrl : window.location.origin;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(projectedUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveCustomUrl = (val: string) => {
+    setCustomUrl(val);
+    localStorage.setItem("lorenz_custom_share_url", val);
   };
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=050505&bgcolor=ffffff&data=${encodeURIComponent(
@@ -218,22 +228,87 @@ export default function PresenterPanel({
 
         {/* QR Generado */}
         {projectedUrl && (
-          <div className="bg-white p-3.5 rounded-lg shadow-xl flex items-center justify-center border-4 border-hw-cyan my-1.5">
+          <div className="bg-white p-3.5 rounded-lg shadow-xl flex items-center justify-center border-4 border-hw-cyan my-1.5 transition duration-300">
             <img src={qrUrl} alt="Escanear QR para unirse" className="w-40 h-40" referrerPolicy="no-referrer" />
           </div>
         )}
 
-        {/* URL y Botón de Copiar */}
-        <div className="flex items-center gap-2 bg-hw-panel border border-hw-border px-2.5 py-1.5 w-full rounded">
-          <span className="text-[10px] text-hw-cyan font-mono truncate flex-1 font-bold">{projectedUrl || "Cargando..."}</span>
-          <button
-            onClick={handleCopy}
-            className="text-hw-cyan hover:text-[#25bca8] p-1.5 transition cursor-pointer bg-hw-bg/50 border border-hw-border hover:border-hw-cyan/30 rounded"
-            title="Copiar enlace"
-          >
-            {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
-          </button>
+        {/* URL y Botón de Copiar / Editar */}
+        <div className="flex flex-col gap-2 w-full">
+          {isEditingUrl ? (
+            <div className="flex items-center gap-1.5 w-full bg-hw-panel border border-hw-cyan/50 p-1.5 rounded">
+              <input
+                type="text"
+                placeholder="https://tudominio.com"
+                value={customUrl}
+                onChange={(e) => setCustomUrl(e.target.value)}
+                className="flex-1 bg-transparent border-none text-[10.5px] text-white outline-none font-mono font-bold px-1"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  handleSaveCustomUrl(customUrl);
+                  setIsEditingUrl(false);
+                }}
+                className="bg-hw-cyan hover:bg-[#25bca8] text-hw-bg px-2 py-1 text-[9.5px] font-mono font-bold uppercase cursor-pointer transition rounded"
+                title="Guardar URL"
+              >
+                ✓ Guardar
+              </button>
+              <button
+                onClick={() => {
+                  handleSaveCustomUrl("");
+                  setIsEditingUrl(false);
+                }}
+                className="bg-hw-bg hover:bg-hw-border text-gray-400 border border-hw-border px-2 py-1 text-[9.5px] font-mono cursor-pointer transition rounded"
+                title="Restaurar por defecto"
+              >
+                Reset
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-hw-panel border border-hw-border px-2.5 py-1.5 w-full rounded">
+              <span className="text-[10px] text-hw-cyan font-mono truncate flex-1 font-bold">
+                {projectedUrl || "Cargando..."}
+              </span>
+              <div className="flex gap-1 shrink-0">
+                <button
+                  onClick={() => setIsEditingUrl(true)}
+                  className="text-gray-400 hover:text-white p-1.5 transition cursor-pointer bg-hw-bg/50 border border-hw-border hover:border-hw-border/80 rounded"
+                  title="Editar URL de destino"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleCopy}
+                  className="text-hw-cyan hover:text-[#25bca8] p-1.5 transition cursor-pointer bg-hw-bg/50 border border-hw-border hover:border-hw-cyan/30 rounded"
+                  title="Copiar enlace"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Sugerencia inteligente de producción */}
+          {window.location.origin.includes("ais-") && !customUrl && (
+            <div className="bg-hw-amber/10 border border-hw-amber/20 p-2.5 rounded flex flex-col gap-1.5 text-left">
+              <div className="text-[9px] text-hw-amber font-mono font-bold uppercase leading-none">
+                💡 ALERTA DE ENTORNO PRIVADO
+              </div>
+              <p className="text-[9px] text-gray-400 font-mono leading-relaxed uppercase">
+                Estás en AI Studio. Para compartir con móviles, debes usar el enlace público de producción:
+              </p>
+              <button
+                onClick={() => handleSaveCustomUrl("https://lorenz-chaos-simulation-687962296896.us-east1.run.app")}
+                className="w-full text-center bg-hw-amber/20 hover:bg-hw-amber/30 text-hw-amber py-1 text-[9px] font-mono font-bold tracking-wider rounded border border-hw-amber/30 uppercase cursor-pointer transition"
+              >
+                👉 USAR LINK DE PRODUCCIÓN
+              </button>
+            </div>
+          )}
         </div>
+
         <p className="text-[9.5px] text-gray-500 text-center leading-relaxed font-mono uppercase">
           {urlType === "public" ? (
             <>
