@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-hw-cyan: #2dd4bf;
+  --color-hw-amber: #f59e0b;
+  --color-hw-bg: #050505;
+  --color-hw-border: #262626;
+  --color-hw-panel: #121212;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #050505;
+  color: #e0e0e0;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2dd4bf;
+}
+
+/* Glowing status animations */
+@keyframes status-glow {
+  0%, 100% { box-shadow: 0 0 4px #2dd4bf; opacity: 0.8; }
+  50% { box-shadow: 0 0 10px #2dd4bf; opacity: 1; }
+}
+
+.glow-dot {
+  animation: status-glow 2s infinite ease-in-out;
+}

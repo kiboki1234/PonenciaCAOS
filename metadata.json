@@ -1,0 +1,6 @@
+{
+  "name": "Lorenz Chaos Simulation",
+  "description": "Demostraciones interactivas del sistema de Lorenz en tiempo real para ponencias en vivo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
