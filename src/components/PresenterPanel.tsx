@@ -23,21 +23,28 @@ export default function PresenterPanel({
   const [passcode, setPasscode] = useState("");
   const [copied, setCopied] = useState(false);
   const [appUrl, setAppUrl] = useState("");
+  const [urlType, setUrlType] = useState<"public" | "current">("public");
 
   useEffect(() => {
     // Obtener la URL base del navegador actual
-    const base = window.location.origin;
+    let base = window.location.origin;
+    // Convertir el dominio de desarrollo privado (ais-dev-) al de previsualización pública (ais-pre-)
+    if (base.includes("ais-dev-")) {
+      base = base.replace("ais-dev-", "ais-pre-");
+    }
     setAppUrl(base);
   }, []);
 
+  const projectedUrl = urlType === "public" ? appUrl : window.location.origin;
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(appUrl);
+    navigator.clipboard.writeText(projectedUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=ffffff&bgcolor=050505&data=${encodeURIComponent(
-    appUrl
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=050505&bgcolor=ffffff&data=${encodeURIComponent(
+    projectedUrl
   )}`;
 
   return (
@@ -176,31 +183,69 @@ export default function PresenterPanel({
 
       {/* Proyección QR para unir al público */}
       <div className="bg-hw-bg border border-hw-border p-4 flex flex-col items-center gap-3">
-        <div className="flex items-center gap-2 text-xs text-gray-400 font-bold font-mono w-full uppercase">
-          <QrCode className="w-4 h-4 text-hw-cyan" />
-          <span>Proyectar Acceso Público</span>
+        <div className="flex flex-col gap-1.5 w-full">
+          <div className="flex items-center gap-2 text-xs text-gray-400 font-bold font-mono uppercase">
+            <QrCode className="w-4 h-4 text-hw-cyan" />
+            <span>Compartir Ponencia</span>
+          </div>
+          
+          {/* Selector de tipo de URL */}
+          <div className="flex p-0.5 bg-hw-panel border border-hw-border mt-1 rounded text-[10px] font-mono">
+            <button
+              onClick={() => setUrlType("public")}
+              className={`flex-1 py-1 px-2 text-center transition cursor-pointer font-bold ${
+                urlType === "public"
+                  ? "bg-hw-cyan text-hw-bg rounded-sm"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              title="URL pública para móviles y audiencia externa sin login de Google"
+            >
+              🌐 RECOMENDADO (PÚBLICO)
+            </button>
+            <button
+              onClick={() => setUrlType("current")}
+              className={`flex-1 py-1 px-2 text-center transition cursor-pointer font-bold ${
+                urlType === "current"
+                  ? "bg-hw-amber text-hw-bg rounded-sm"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              title="URL exacta de tu navegador actual"
+            >
+              ⚡ ENTORNO ACTUAL
+            </button>
+          </div>
         </div>
 
         {/* QR Generado */}
-        {appUrl && (
-          <div className="bg-hw-panel border border-hw-border p-2.5 flex items-center justify-center">
-            <img src={qrUrl} alt="Escanear QR para unirse" className="w-36 h-36" referrerPolicy="no-referrer" />
+        {projectedUrl && (
+          <div className="bg-white p-3.5 rounded-lg shadow-xl flex items-center justify-center border-4 border-hw-cyan my-1.5">
+            <img src={qrUrl} alt="Escanear QR para unirse" className="w-40 h-40" referrerPolicy="no-referrer" />
           </div>
         )}
 
         {/* URL y Botón de Copiar */}
-        <div className="flex items-center gap-2 bg-hw-panel border border-hw-border px-2.5 py-1.5 w-full">
-          <span className="text-[10px] text-gray-400 font-mono truncate flex-1">{appUrl || "Cargando URL..."}</span>
+        <div className="flex items-center gap-2 bg-hw-panel border border-hw-border px-2.5 py-1.5 w-full rounded">
+          <span className="text-[10px] text-hw-cyan font-mono truncate flex-1 font-bold">{projectedUrl || "Cargando..."}</span>
           <button
             onClick={handleCopy}
-            className="text-hw-cyan hover:text-[#25bca8] p-1 transition cursor-pointer"
+            className="text-hw-cyan hover:text-[#25bca8] p-1.5 transition cursor-pointer bg-hw-bg/50 border border-hw-border hover:border-hw-cyan/30 rounded"
             title="Copiar enlace"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
           </button>
         </div>
-        <p className="text-[9.5px] text-gray-600 text-center leading-relaxed font-mono uppercase">
-          Pide al público que escanee el QR o use este enlace para seguir la simulación en tiempo real desde sus móviles.
+        <p className="text-[9.5px] text-gray-500 text-center leading-relaxed font-mono uppercase">
+          {urlType === "public" ? (
+            <>
+              Escanea el QR o usa este enlace para unirte desde el móvil sin logins de Google.
+              <span className="text-hw-cyan block mt-1 font-bold">// ENTORNO PÚBLICO SEGURO Y ABIERTO</span>
+            </>
+          ) : (
+            <>
+              Usa este enlace si estás proyectando localmente o en el mismo equipo.
+              <span className="text-hw-amber block mt-1 font-bold">// DIRECCIÓN EXACTA DIRECTA</span>
+            </>
+          )}
         </p>
       </div>
     </div>

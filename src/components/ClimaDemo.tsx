@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Sliders } from "lucide-react";
 
 interface ClimaDemoProps {
   precision: number;
@@ -11,6 +12,12 @@ interface ClimaDemoProps {
   onControlAction: (action: "play" | "pause" | "reset") => void;
 }
 
+const STORED_X0 = 5.067283;
+const roundedX0 = (prec: number) => {
+  const f = Math.pow(10, prec);
+  return Math.round(STORED_X0 * f) / f;
+};
+
 export default function ClimaDemo({
   precision,
   rho,
@@ -22,19 +29,19 @@ export default function ClimaDemo({
   onControlAction,
 }: ClimaDemoProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [showMobileControls, setShowMobileControls] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Estados locales para la simulación
   const stateRef = useRef({
-    A: { x: 5.067283, y: 1.0, z: 1.0 },
-    B: { x: 5.067283, y: 1.0, z: 1.0 },
+    A: { x: STORED_X0, y: 1.0, z: 1.0 },
+    B: { x: roundedX0(precision), y: 1.0, z: 1.0 },
     series: [] as Array<{ t: number; a: number; b: number }>,
     simTime: 0,
     divergedAt: null as number | null,
     lastResetCounter: resetCounter,
   });
 
-  const STORED_X0 = 5.067283;
   const DT = 0.005;
   const STEPS_PER_FRAME = 7;
   const WINDOW_DAYS = 45;
@@ -46,12 +53,6 @@ export default function ClimaDemo({
   useEffect(() => {
     paramsRef.current = { rho, precision, speed, playing };
   }, [rho, precision, speed, playing]);
-
-  // Función para redondear x0 según los decimales tecleados
-  const roundedX0 = (prec: number) => {
-    const f = Math.pow(10, prec);
-    return Math.round(STORED_X0 * f) / f;
-  };
 
   // Función de integración RK4
   const deriv = (s: { x: number; y: number; z: number }, r: number) => {
@@ -86,6 +87,11 @@ export default function ClimaDemo({
     stateRef.current.simTime = 0;
     stateRef.current.divergedAt = null;
   };
+
+  // Resetear simulación cuando cambia la precisión o turbulencia (rho) para ver la divergencia de inmediato
+  useEffect(() => {
+    localReset();
+  }, [precision, rho]);
 
   // Efecto para escuchar reinicios externos de la simulación
   useEffect(() => {
@@ -181,7 +187,7 @@ export default function ClimaDemo({
       const { series } = stateRef.current;
       if (series.length < 2) return;
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = key === "a" ? 3.0 : 1.5;
       ctx.lineJoin = "round";
       ctx.beginPath();
       let started = false;
@@ -288,9 +294,22 @@ export default function ClimaDemo({
   const divergedAt = stateRef.current.divergedAt;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] h-full w-full min-h-0 overflow-hidden bg-hw-bg">
+    <div className="relative flex flex-col lg:grid lg:grid-cols-[340px_1fr] h-full w-full min-h-0 overflow-hidden bg-hw-bg">
+      {/* Botón flotante para controles en móvil/resoluciones bajas */}
+      <button
+        onClick={() => setShowMobileControls(!showMobileControls)}
+        className="lg:hidden absolute bottom-5 left-5 z-20 flex items-center gap-1.5 bg-hw-cyan text-hw-bg font-mono font-bold text-[11px] px-3.5 py-2 border border-hw-cyan rounded shadow-lg cursor-pointer uppercase hover:bg-[#25bca8] transition-colors"
+      >
+        <Sliders className="w-4 h-4" />
+        <span>{showMobileControls ? "Ocultar Controles" : "Ajustes Pronóstico"}</span>
+      </button>
+
       {/* ---------- PANEL DE CONTROL ---------- */}
-      <aside className="bg-hw-panel border-r border-hw-border p-5 lg:overflow-y-auto flex flex-col gap-5 select-none min-h-0">
+      <aside className={`
+        bg-hw-panel border-r border-hw-border p-5 overflow-y-auto flex flex-col gap-5 select-none min-h-0
+        absolute lg:static inset-y-0 left-0 z-10 w-[300px] sm:w-[340px] transition-transform duration-300
+        ${showMobileControls ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] tracking-[0.25em] uppercase text-hw-cyan font-bold font-mono">
             // EDWARD LORENZ · 1961
@@ -467,7 +486,7 @@ export default function ClimaDemo({
           </div>
         </div>
 
-        <div className="absolute bottom-3 left-5 font-mono text-[10.5px] text-gray-500">
+        <div className="absolute bottom-16 lg:bottom-3 left-5 font-mono text-[10.5px] text-gray-500">
           eje horizontal = días de pronóstico →
         </div>
       </section>

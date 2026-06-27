@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Sliders } from "lucide-react";
 
 interface AtractorDemoProps {
   eps: number;
@@ -34,6 +35,7 @@ export default function AtractorDemo({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sparkRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [showMobileControls, setShowMobileControls] = useState(false);
 
   // Estados locales para la simulación
   const stateRef = useRef({
@@ -115,6 +117,11 @@ export default function AtractorDemo({
     };
   };
 
+  // Resetear simulación cuando cambian los parámetros para ver el impacto en tiempo real
+  useEffect(() => {
+    localReset();
+  }, [eps, x0, rho, sigma, beta]);
+
   // Escuchar reinicios externos
   useEffect(() => {
     if (resetCounter !== stateRef.current.lastResetCounter) {
@@ -153,7 +160,7 @@ export default function AtractorDemo({
       cv.style.width = `${W}px`;
       cv.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      baseScale = Math.min(W, H) / 9.5;
+      baseScale = Math.min(W, H) / 14.0;
 
       // Spark Canvas
       const sr = spark.getBoundingClientRect();
@@ -354,7 +361,7 @@ export default function AtractorDemo({
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     cameraRef.current.zoom *= e.deltaY < 0 ? 1.08 : 0.93;
-    cameraRef.current.zoom = Math.max(0.3, Math.min(4.0, cameraRef.current.zoom));
+    cameraRef.current.zoom = Math.max(0.1, Math.min(5.0, cameraRef.current.zoom));
   };
 
   // Etiquetas informativas de la divergencia
@@ -365,9 +372,22 @@ export default function AtractorDemo({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] h-full w-full min-h-0 overflow-hidden bg-hw-bg">
+    <div className="relative flex flex-col lg:grid lg:grid-cols-[340px_1fr] h-full w-full min-h-0 overflow-hidden bg-hw-bg">
+      {/* Botón flotante para controles en móvil/resoluciones bajas */}
+      <button
+        onClick={() => setShowMobileControls(!showMobileControls)}
+        className="lg:hidden absolute bottom-5 left-5 z-20 flex items-center gap-1.5 bg-hw-cyan text-hw-bg font-mono font-bold text-[11px] px-3.5 py-2 border border-hw-cyan rounded shadow-lg cursor-pointer uppercase hover:bg-[#25bca8] transition-colors"
+      >
+        <Sliders className="w-4 h-4" />
+        <span>{showMobileControls ? "Ocultar Controles" : "Ajustes Simulación"}</span>
+      </button>
+
       {/* ---------- PANEL DE CONTROL ---------- */}
-      <aside className="bg-hw-panel border-r border-hw-border p-5 lg:overflow-y-auto flex flex-col gap-5 select-none min-h-0">
+      <aside className={`
+        bg-hw-panel border-r border-hw-border p-5 overflow-y-auto flex flex-col gap-5 select-none min-h-0
+        absolute lg:static inset-y-0 left-0 z-10 w-[300px] sm:w-[340px] transition-transform duration-300
+        ${showMobileControls ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] tracking-[0.25em] uppercase text-hw-cyan font-bold font-mono">
             // TEORÍA DEL CAOS · 1963
@@ -626,7 +646,7 @@ export default function AtractorDemo({
           </div>
         </div>
 
-        <div className="absolute bottom-5 left-5 font-mono text-xs text-gray-500">
+        <div className="absolute bottom-16 lg:bottom-5 left-5 font-mono text-xs text-gray-500">
           T = <span className="text-hw-cyan font-bold">{simTimeState.toFixed(1)}</span>
         </div>
       </section>

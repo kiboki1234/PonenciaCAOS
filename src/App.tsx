@@ -266,23 +266,23 @@ export default function App() {
   return (
     <div className="relative flex flex-col h-screen w-screen bg-hw-bg text-[#e0e0e0] overflow-hidden font-sans">
       {/* ---------- HEADER GENERAL ---------- */}
-      <header className="flex items-center justify-between bg-hw-panel border-b border-hw-border px-6 py-3 z-20 select-none shrink-0">
-        <div className="flex items-center gap-6">
-          <div className="font-mono text-sm md:text-base font-bold tracking-widest text-white">
-            <span className="text-hw-cyan mr-1.5">//</span> LORENZ SYNC PLATFORM
+      <header className="flex flex-col md:flex-row items-center gap-3 justify-between bg-hw-panel border-b border-hw-border px-4 py-3 md:px-6 z-20 select-none shrink-0">
+        <div className="flex items-center justify-between w-full md:w-auto gap-4">
+          <div className="font-mono text-xs sm:text-sm md:text-base font-bold tracking-widest text-white">
+            <span className="text-hw-cyan mr-1.5">//</span> LORENZ SYNC
           </div>
-          <div className="status-badge flex items-center bg-hw-cyan/10 px-3 py-1 border border-hw-cyan rounded-md text-hw-cyan text-[11px] font-bold tracking-wider">
+          <div className="status-badge hidden sm:flex items-center bg-hw-cyan/10 px-3 py-1 border border-hw-cyan rounded-md text-hw-cyan text-[11px] font-bold tracking-wider">
             <div className="status-dot w-2 h-2 bg-hw-cyan rounded-full mr-2 glow-dot" />
-            <span className="hidden sm:inline">SESIÓN EN VIVO: </span>TEORÍA DEL CAOS
+            <span>SESIÓN EN VIVO</span>
           </div>
         </div>
 
         {/* SELECTOR DE PESTAÑAS SINCRONIZADO */}
-        <div className="flex bg-hw-border border border-hw-border">
+        <div className="flex bg-hw-border border border-hw-border rounded-sm overflow-hidden text-[10px] sm:text-[11px]">
           <button
             onClick={() => (canControl ? handleTabChange("clima") : null)}
             disabled={!canControl}
-            className={`px-4 py-1.5 text-[11px] uppercase tracking-wider transition cursor-pointer font-bold ${
+            className={`px-3 py-1 md:px-4 md:py-1.5 uppercase tracking-wider transition cursor-pointer font-bold ${
               isClima
                 ? "bg-hw-cyan text-hw-bg font-bold"
                 : "bg-hw-panel text-gray-400 hover:text-white"
@@ -293,7 +293,7 @@ export default function App() {
           <button
             onClick={() => (canControl ? handleTabChange("atractor") : null)}
             disabled={!canControl}
-            className={`px-4 py-1.5 text-[11px] uppercase tracking-wider transition cursor-pointer font-bold ${
+            className={`px-3 py-1 md:px-4 md:py-1.5 uppercase tracking-wider transition cursor-pointer font-bold ${
               !isClima
                 ? "bg-hw-cyan text-hw-bg font-bold"
                 : "bg-hw-panel text-gray-400 hover:text-white"
@@ -304,48 +304,46 @@ export default function App() {
         </div>
 
         {/* INFORMACIÓN DE CONEXIÓN */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between w-full md:w-auto gap-2 md:gap-3">
           {/* Indicador de rol */}
           <span
-            className={`text-[10px] uppercase font-mono font-bold px-2.5 py-0.5 rounded border ${
+            className={`text-[9px] md:text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded border ${
               isPresenter
                 ? "bg-hw-cyan/10 border-hw-cyan/30 text-hw-cyan"
                 : "bg-hw-panel border-hw-border text-gray-400"
             }`}
           >
-            {isPresenter ? "Presentador" : "Público"}
+            {isPresenter ? "Ponente" : "Público"}
           </span>
 
-          {/* Botón de panel si es presentador o está en ruta /presenter */}
-          {(isPresenter || isPresenterPath) && (
-            <button
-              onClick={() => setShowPresenterSidebar(!showPresenterSidebar)}
-              className={`text-[11px] font-mono font-bold px-3 py-1 rounded border transition cursor-pointer flex items-center gap-1.5 ${
-                showPresenterSidebar
-                  ? "bg-hw-cyan text-hw-bg border-hw-cyan"
-                  : "bg-hw-panel text-white border-hw-border hover:bg-[#1f1f1f]"
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>PONENCIA</span>
-            </button>
-          )}
+          {/* Botón de panel */}
+          <button
+            onClick={() => setShowPresenterSidebar(!showPresenterSidebar)}
+            className={`text-[9px] md:text-[11px] font-mono font-bold px-2.5 py-1 rounded border transition cursor-pointer flex items-center gap-1.5 ${
+              showPresenterSidebar
+                ? "bg-hw-cyan text-hw-bg border-hw-cyan"
+                : "bg-hw-panel text-white border-hw-border hover:bg-[#1f1f1f]"
+            }`}
+          >
+            <Shield className="w-3 h-3 md:w-3.5 md:h-3.5" />
+            <span>{isPresenter ? "PONENCIA" : "ACCESO"}</span>
+          </button>
 
           {/* Contador de conectados */}
-          <div className="flex items-center gap-2 bg-hw-panel border border-hw-border px-3 py-1 rounded text-[11px] font-mono font-bold text-hw-cyan">
-            <Users className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1 bg-hw-panel border border-hw-border px-2 py-1 rounded text-[9px] md:text-[11px] font-mono font-bold text-hw-cyan">
+            <Users className="w-3 h-3 md:w-3.5 md:h-3.5" />
             <span>{clientsCount}</span>
-            <span className="text-gray-500 text-[10px]">CONECTADOS</span>
+            <span className="text-gray-500 text-[9px] hidden sm:inline">CONECTADOS</span>
           </div>
 
           {/* Estado de red */}
           <div
-            className={`flex items-center justify-center p-1.5 rounded ${
+            className={`flex items-center justify-center p-1 rounded ${
               isConnected ? "text-hw-cyan bg-hw-cyan/5" : "text-red-500 bg-red-500/10"
             }`}
             title={isConnected ? "Conectado al servidor de sincronización" : "Desconectado. Reconectando..."}
           >
-            {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4 animate-pulse" />}
+            {isConnected ? <Wifi className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <WifiOff className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse" />}
           </div>
         </div>
       </header>
